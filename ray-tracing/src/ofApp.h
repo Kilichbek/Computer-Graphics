@@ -1,8 +1,10 @@
 #pragma once
 
+#include "ofxGui.h"
 #include "ofMain.h"
 #include "rtRayTracer.h"
 #include "rtLight.h"
+#include "tbb/parallel_for.h"
 
 class ofApp : public ofBaseApp{
 
@@ -26,5 +28,8 @@ class ofApp : public ofBaseApp{
 		int width, height;
 		
 		ofTexture texColor;
-		ofPixels colorPixels;		
+		ofPixels colorPixels;
+
+		ofParameter<float> render_time;
+  		ofxPanel gui;		
 };
