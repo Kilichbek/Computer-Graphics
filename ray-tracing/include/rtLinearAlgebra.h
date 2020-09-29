@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "ofMain.h"
 
-#define EPS 1e-4
+#define EPS 6e-5
 
 static inline glm::vec3 scale_vec(const float alpha, const glm::vec3& v)
 {
@@ -77,7 +77,7 @@ static bool solve_quadratic(const float a, const float b, const float c, float &
 {
     auto discriminant = b*b - 4.0*a*c;
     
-    if(discriminant < 0) return false;
+    if(discriminant < 0.0) return false;
     
     auto root = sqrt(discriminant);
     
