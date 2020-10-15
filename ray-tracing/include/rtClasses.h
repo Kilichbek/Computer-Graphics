@@ -14,6 +14,8 @@ class Viewport{
     Viewport(float w_extent, float h_extent):
         l(-w_extent), r(w_extent), b(-h_extent), t(h_extent)
         {}
+    float toU(float x, int width) const { return l + ((r - l) * (x + 0.5)) / static_cast<float>(width); }
+    float toV(float y, int height) const { return b + ((t - b) * (y + 0.5)) / static_cast<float>(height); }
   };
 
 

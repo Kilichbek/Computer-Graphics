@@ -1,8 +1,8 @@
 #include "rtRayTracer.h"
 
-RayTracer::RayTracer(int w, int h, const Viewport& v, 
-    const AmbientLight& ambient, const ProjectMode& m):
-    width(w), height(h), viewport(v), ambient_light(ambient),mode(m) {
+RayTracer::RayTracer(int w, int h, Camera& c, const Viewport& v, 
+    const AmbientLight& ambient):
+    width(w), height(h), camera(c),viewport(v), ambient_light(ambient) {
 
 }
 
@@ -65,7 +65,7 @@ ofColor RayTracer::getPixelColor(int i, int j) const
         }
         auto object_color = record.obj->getColor();
         color = glm::vec3(object_color.r,object_color.g,object_color.b);
-        color = matmul_elementwise(color,intensity);
+        color = hadamard_product(color,intensity);
         color = clamp(color,0.0,1.0);
     }
     color = scale_vec(255.0, color);
@@ -75,23 +75,9 @@ ofColor RayTracer::getPixelColor(int i, int j) const
 
 HitRecord  RayTracer::traceRay(float x, float y) const
 {
-    auto u = viewport.l + ((viewport.r - viewport.l) * (x + 0.5)) / static_cast<float>(width);
-    auto v = viewport.b + ((viewport.t - viewport.b) * (y + 0.5)) / static_cast<float>(height);
-
-    Ray ray;
-    switch(mode){
-        case PERSPECTIVE:
-            ray.d = normalize(glm::vec3(u, v, 1.0));
-            ray.o = glm::vec3(0.0, 0.0, -1);
-            break;
-        case PARALLEL:
-            ray.d = glm::vec3(0.0, 0.0, 1.0);
-            ray.o = glm::vec3(u, v, -1.0);
-            break;
-        default:
-            break;
-    }
-
+    auto u = viewport.toU(x, width);
+    auto v = viewport.toV(y, height);
+    Ray ray = camera.rayForPixel(u,v);
     HitRecord record = testHit(ray);
 
     return record;
@@ -111,4 +97,28 @@ HitRecord RayTracer::testHit(const Ray& ray) const
     }
 
     return closest_so_far;
+}
+
+std::shared_ptr<Primitive> RayTracer::selectObject(int i, int j) const
+{
+    float x = static_cast<float>(i);
+    float y = static_cast<float>(j);
+
+    auto u = viewport.toU(x, width);
+    auto v = viewport.toV(y, height);
+    Ray ray = camera.rayForPixel(u,v);
+    HitRecord closest_so_far;
+
+    std::shared_ptr<Primitive> closest_obj = nullptr;
+    for(const auto& object: objects){
+        HitRecord temp = object->hit(ray);
+        if(temp.hit && temp.t > EPS){
+            if(closest_so_far.t < 0.0 || temp.t < closest_so_far.t){
+                closest_so_far = temp;
+                closest_obj = object;
+            }
+        }
+    }
+
+    return closest_obj;
 }

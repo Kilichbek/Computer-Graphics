@@ -3,6 +3,8 @@
 #include "ofxGui.h"
 #include "ofMain.h"
 #include "rtRayTracer.h"
+#include "rtTransformation.h"
+#include "rtCamera.h"
 #include "rtLight.h"
 #include "tbb/parallel_for.h"
 
@@ -31,5 +33,12 @@ class ofApp : public ofBaseApp{
 		ofPixels colorPixels;
 
 		ofParameter<float> render_time;
-  		ofxPanel gui;		
+  		ofxPanel gui;
+
+		std::unique_ptr<RayTracer> raytracer;
+		std::unique_ptr<Camera> camera;
+
+		std::shared_ptr<Primitive> sphere, plane, cone, cylinder;
+		std::shared_ptr<Primitive> object;
+		
 };

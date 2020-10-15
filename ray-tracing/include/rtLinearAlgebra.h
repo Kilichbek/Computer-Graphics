@@ -4,14 +4,14 @@
 #include <algorithm>
 #include "ofMain.h"
 
-#define EPS 6e-5
+#define EPS 1e-4
 
 static inline glm::vec3 scale_vec(const float alpha, const glm::vec3& v)
 {
 	return glm::vec3(alpha*v[0], alpha*v[1], alpha*v[2]);
 }
 
-static inline glm::vec3 matmul_elementwise(const glm::vec3& v1, const glm::vec3& v2)
+static inline glm::vec3 hadamard_product(const glm::vec3& v1, const glm::vec3& v2)
 {
 	return glm::vec3(
 		v1[0] * v2[0],
@@ -111,4 +111,18 @@ static glm::vec3 clamp(const glm::vec3& v, const float min_val, const float max_
 		clamped_vec[i] = std::min(temp,max_val);
 	}
 	return clamped_vec;
+}
+
+static glm::vec4 matmul(const glm::mat4& matrix, const glm::vec4& v)
+{
+	glm::vec4 answer;
+
+	for(int r=0; r<4; r++){
+		answer[r] = 0.0;
+		for(int c=0;c<4; c++){
+			answer[r] += matrix[c][r]*v[c];
+		}
+	}
+
+	return answer;
 }

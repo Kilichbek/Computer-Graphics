@@ -15,7 +15,7 @@ glm::vec3 Light::getDiffuseColor(const glm::vec3& n,const glm::vec3& l, const gl
 
     // Lambertian shading model
     auto lambert_angle = dot_product(n,l);
-    auto lambert_sf = diffuse_coeff * std::max(0.f,lambert_angle);
+    auto lambert_sf = 0.5*diffuse_coeff * std::max(0.f,lambert_angle);
     auto lambertian = scale_vec(lambert_sf, float_color);
 
     // Blinn-Phong shading model
@@ -24,7 +24,7 @@ glm::vec3 Light::getDiffuseColor(const glm::vec3& n,const glm::vec3& l, const gl
     auto vl = add_vecs(v,l);
     auto h = normalize(vl);
     auto phong_angle = dot_product(n,h);
-    auto phong_sf = spec * pow(std::max(0.f,phong_angle),1000.0);
+    auto phong_sf = 0.7* spec * pow(std::max(0.f,phong_angle),1000.0);
     auto blinn_phong = scale_vec(phong_sf, float_color);
 
     return add_vecs(lambertian,blinn_phong);
