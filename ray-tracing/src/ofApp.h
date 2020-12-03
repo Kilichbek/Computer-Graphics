@@ -27,7 +27,11 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 
+		bool loadObjModels(const std::string& filename, const glm::vec3& position);
+		void updateMinMax(float x, float y, float z);
+
 		int width, height;
+		float min_x, max_x, min_y, max_y, min_z, max_z;
 		
 		ofTexture texColor;
 		ofPixels colorPixels;
@@ -38,7 +42,7 @@ class ofApp : public ofBaseApp{
 		std::unique_ptr<RayTracer> raytracer;
 		std::unique_ptr<Camera> camera;
 
-		std::shared_ptr<Primitive> sphere, plane, cone, cylinder;
+		std::shared_ptr<Primitive> sphere, plane, cone, cylinder, s1;
 		std::shared_ptr<Primitive> object;
 		
 };

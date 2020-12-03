@@ -4,6 +4,7 @@ Plane::Plane(const glm::vec3& p, const glm::vec3& n, float spec_coef,const ofFlo
     point(p), normal(n){
         this->color = color;
         this->specular_coeff = spec_coef;
+        reflect = true;
     }
 
 HitRecord Plane::hit(const Ray& ray) const
@@ -24,8 +25,6 @@ HitRecord Plane::hit(const Ray& ray) const
 }    
 
 
-
-
 // ---------------------------------------------------------------------------------------------------
 
 Sphere::Sphere(float r, const glm::vec3& c, float spec_coef,const ofFloatColor& color):
@@ -35,6 +34,7 @@ Sphere::Sphere(float r, const glm::vec3& c, float spec_coef,const ofFloatColor& 
 
         center_default = center;
         radius_default = radius;
+        reflect = true;
     }
 
 HitRecord Sphere::hit(const Ray& ray) const
@@ -89,6 +89,7 @@ Cone::Cone(const glm::vec3& c, const glm::vec3& o, float a, float spec_coef, con
 
         center_default = center;
         apex_default = apex;
+        reflect = false;
     }
 
 HitRecord Cone::hit(const Ray& ray) const
@@ -199,6 +200,7 @@ Cylinder::Cylinder(const glm::vec3& c1, const glm::vec3& c2, float r, float spec
         radius_default = radius;
         ct_default = center_top;
         cb_default = center_bottom;
+        reflect = false;
     }
 
 HitRecord Cylinder::hit(const Ray& ray) const
@@ -296,4 +298,118 @@ void Cylinder::reset()
     axis = subtract_vecs(center_top,center_bottom);
     height = vec_length(axis);
     axis = normalize(axis);
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+Model::Model(const glm::vec3& p, const ofFloatColor& color): 
+    position(p){
+        this->color = color;
+        reflect = false;
+        use_precomputed = true;
+    }
+    
+HitRecord Model::hit(const Ray& ray) const
+{
+    //auto bound_record = bounding_sphere.hit(ray);
+    //if (!bound_record.hit) return HitRecord();
+
+    auto bound_record = bbox.hit(ray);
+    if (!bound_record.hit) return HitRecord();
+
+    float min_t = INFINITY;
+    bool hit = false;
+    glm::vec3 n(0,0,0), p(0,0,0);
+
+    // ref: https://github.com/0ctobyte/raytracer/blob/master/src/mesh.cpp
+    for(auto& triangle: triangles){
+
+        // Compute the intersection using Moller & Trumbore's algorithm and Cramer's rule
+        // The following variables are the expanded terms from the matrix form of the system
+        auto A = vertices[triangle.vertices[0]];
+        auto B = vertices[triangle.vertices[1]];
+        auto C = vertices[triangle.vertices[2]];
+
+        auto e1 = subtract_vecs(B,A);
+        auto e2 = subtract_vecs(C,A);
+        auto h = cross_product(ray.d,e2);
+
+        // If determinant is zero then the ray is parallel to the triangle
+        auto det = dot_product(h,e1);
+        if (det < EPS) continue;
+
+        // Calculate alpha, barycentric coordinate, and make sure it is within range of [0, 1]
+        auto s = subtract_vecs(ray.o, A);
+        float alpha = dot_product(s,h) / det;
+        if (alpha < 0.0 || alpha > 1.0) continue;
+
+        // Calculate v, barycentric coordinate, and make sure it is within range. 
+        // alpha + beta must be less than 1!
+        auto q = cross_product(s,e1);
+        auto beta = dot_product(ray.d,q) / det;
+        if (beta < 0.0 || (alpha + beta) > 1.0) continue;
+
+        auto t = dot_product(e2, q) / det;
+        if(t > EPS && t < min_t){  // The ray intersects this triangle
+            hit = true;
+            min_t = t;
+            p = ray.at(min_t);
+            auto gamma = 1.0 - (alpha + beta);
+            if (use_precomputed){
+                auto v1 = scale_vec(gamma, pnormals[triangle.vertices[0]]);
+                auto v2 = scale_vec(alpha, pnormals[triangle.vertices[1]]);
+                auto v3 = scale_vec(beta, pnormals[triangle.vertices[2]]);
+                auto tmp = add_vecs(v1,v2);
+                n = normalize(add_vecs(tmp,v3));
+            }
+            else{
+                auto v1 = scale_vec(gamma, normals[triangle.vertices[0]]);
+                auto v2 = scale_vec(alpha, normals[triangle.vertices[1]]);
+                auto v3 = scale_vec(beta, normals[triangle.vertices[2]]);
+                auto tmp = add_vecs(v1,v2);
+                n = normalize(add_vecs(tmp,v3));
+            }
+        }
+    }
+
+    return HitRecord(hit, min_t, p, n, *this, ray);
+}
+
+// ---------------------------------------------------------------------------------------------------
+
+BBox::BBox(const glm::vec3& v1, const glm::vec3& v2):
+    min(v1), max(v2)
+{
+    this->color = ofFloatColor(1,1,1,1);
+}
+
+HitRecord BBox::hit(const Ray& ray) const
+{
+    // ref: http://web.cse.ohio-state.edu/~parent.1/classes/782/Lectures/02_Intersections.pdf
+    glm::vec3 n,p;
+    auto inv_dir = glm::vec3(1.f/ray.d[0], 1.f/ray.d[1], 1.f/ray.d[2]);
+    auto delta_min = hadamard_product(inv_dir, subtract_vecs(min, ray.o));
+    auto delta_max = hadamard_product(inv_dir, subtract_vecs(max, ray.o));
+
+    float tmin = delta_min.x;
+    float tmax = delta_max.x;
+    if(tmin > tmax) std::swap(tmin, tmax);
+    
+    float tmin_y = delta_min.y;
+    float tmax_y = delta_max.y;
+    if(tmin_y > tmax_y) std::swap(tmin_y, tmax_y);
+
+    tmin = std::min(tmin, tmin_y);
+    tmax = std::max(tmax, tmax_y);
+    
+    float tmin_z = delta_min.z;
+    float tmax_z = delta_max.z;
+    if(tmin_z > tmax_z) std::swap(tmin_z, tmax_z);
+
+    if(tmin > tmax_z || tmin_z > tmax) return HitRecord();
+
+    tmin = std::min(tmin, tmin_z);
+    tmax = std::max(tmax, tmax_z);
+
+    return HitRecord(true, tmin, p, n, *this, ray);
 }

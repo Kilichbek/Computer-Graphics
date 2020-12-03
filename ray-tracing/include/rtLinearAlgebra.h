@@ -1,5 +1,6 @@
 #pragma once
 
+#include <random>
 #include <cmath>
 #include <algorithm>
 #include "ofMain.h"
@@ -11,6 +12,11 @@ static inline glm::vec3 scale_vec(const float alpha, const glm::vec3& v)
 	return glm::vec3(alpha*v[0], alpha*v[1], alpha*v[2]);
 }
 
+static inline glm::vec4 scale_vec(const float alpha, const glm::vec4& v)
+{
+	return glm::vec4(alpha*v[0], alpha*v[1], alpha*v[2], alpha*v[3]);
+}
+
 static inline glm::vec3 hadamard_product(const glm::vec3& v1, const glm::vec3& v2)
 {
 	return glm::vec3(
@@ -19,12 +25,33 @@ static inline glm::vec3 hadamard_product(const glm::vec3& v1, const glm::vec3& v
 		v1[2] * v2[2]
 	);
 }
+
+static inline glm::vec4 hadamard_product(const glm::vec4& v1, const glm::vec4& v2)
+{
+	return glm::vec4(
+		v1[0] * v2[0],
+		v1[1] * v2[1],
+		v1[2] * v2[2],
+		v1[3] * v2[3]		
+	);
+}
+
 static inline glm::vec3 add_vecs(const glm::vec3& v1, const glm::vec3& v2)
 {
 	return glm::vec3(
 		v1[0] + v2[0],
 		v1[1] + v2[1],
 		v1[2] + v2[2]
+	);
+}
+
+static inline glm::vec4 add_vecs(const glm::vec4& v1, const glm::vec4& v2)
+{
+	return glm::vec4(
+		v1[0] + v2[0],
+		v1[1] + v2[1],
+		v1[2] + v2[2],
+		v1[3] + v2[3]
 	);
 }
 
@@ -113,6 +140,16 @@ static glm::vec3 clamp(const glm::vec3& v, const float min_val, const float max_
 	return clamped_vec;
 }
 
+static glm::vec4 clamp(const glm::vec4& v, const float min_val, const float max_val)
+{
+    glm::vec4 clamped_vec = v;
+	for (int i=0; i<4; i++){
+		auto temp = std::max(v[i],min_val);
+		clamped_vec[i] = std::min(temp,max_val);
+	}
+	return clamped_vec;
+}
+
 static glm::vec4 matmul(const glm::mat4& matrix, const glm::vec4& v)
 {
 	glm::vec4 answer;
@@ -125,4 +162,17 @@ static glm::vec4 matmul(const glm::mat4& matrix, const glm::vec4& v)
 	}
 
 	return answer;
+}
+
+static glm::vec3 random_unit_disk() 
+{
+	std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_real_distribution<> dis(-1.0, 1.0);
+    
+    while (true) {
+        auto p = glm::vec3(dis(gen), dis(gen), 0);
+        if (p[0] * p[0] + p[1] * p[1] >= 1) continue;
+        return p;
+    }
 }

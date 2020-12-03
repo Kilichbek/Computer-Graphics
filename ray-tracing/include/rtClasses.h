@@ -5,6 +5,7 @@
 #include "rtLinearAlgebra.h"
 
 class Primitive;
+struct Triangle { unsigned vertices[3] = {0, 0, 0}; };
 
 // Viewport class
 class Viewport{
@@ -54,3 +55,4 @@ class HitRecord {
             this->ray = ray;
         }
 };
+

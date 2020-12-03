@@ -7,7 +7,7 @@ class AmbientLight {
   public:
     float ambient_coeff;
     ofFloatColor color;
-    glm::vec3 light;
+    glm::vec4 light;
     AmbientLight(float coeff, const ofFloatColor& c);
 };
 
@@ -19,4 +19,5 @@ class Light {
 
     Light(const glm::vec3& p, float diff_coef, const ofFloatColor& c);
     glm::vec3 getDiffuseColor(const glm::vec3& n,const glm::vec3& l,const glm::vec3& r, float spec);
+    glm::vec4 getIllumination(float angle);
 };

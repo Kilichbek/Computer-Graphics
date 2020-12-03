@@ -25,7 +25,7 @@ void Camera::reset()
     cur_pos = default_pos;
     u = dft_u;
     w = dft_w;
-    v = cross_product(u,w);
+    v = cross_product(w,u);
     v = normalize(v);
     dist = 1;
 }
@@ -63,7 +63,28 @@ void Camera::zoom(float alpha)
 
 Ray Camera::rayForPixel(float x, float y) const 
 {
+    bool dof = false;
+    
     Ray ray;
+
+    if(dof){
+        glm::vec3 lookat = glm::vec3(0, 0, dist);
+        float aperture = 0.0;
+        auto lens_radius = aperture / 2;
+        float focus_dist = (cur_pos - lookat).length();
+        auto horizontal = scale_vec(focus_dist * 2.f, u);
+        auto vertical = scale_vec(focus_dist * 1.5, v);
+        auto lower_left_corner = cur_pos - horizontal/2 - vertical/2 - focus_dist*w;
+
+        auto rd = lens_radius * random_unit_disk();
+        auto offset = u * rd.x + v * rd.y;
+        ray.o = cur_pos + offset;
+        ray.d = lower_left_corner + x*horizontal + y*vertical - cur_pos - offset;
+        ray.d[2] *= -1;
+
+        return ray;
+    }
+
     auto a = scale_vec(x,u);
     auto b = scale_vec(y,v);
     auto uv = add_vecs(a,b);

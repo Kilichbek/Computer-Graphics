@@ -2,7 +2,7 @@
 
 AmbientLight::AmbientLight(float coeff, const ofFloatColor& c):
     ambient_coeff(coeff), color(c){
-        light = scale_vec(coeff,glm::vec3(color.r,color.g,color.b));
+        light = glm::vec4(coeff*color.r,coeff*color.g,coeff*color.b,color.a);
     }
 
 Light::Light(const glm::vec3& p, float diff_coef, const ofFloatColor& c):
@@ -28,4 +28,11 @@ glm::vec3 Light::getDiffuseColor(const glm::vec3& n,const glm::vec3& l, const gl
     auto blinn_phong = scale_vec(phong_sf, float_color);
 
     return add_vecs(lambertian,blinn_phong);
+}
+
+glm::vec4 Light::getIllumination(float angle)
+{
+    auto sf = diffuse_coeff * std::max(0.f, angle);
+
+    return glm::vec4(sf * color.r, sf * color.g, sf * color.b, color.a);
 }

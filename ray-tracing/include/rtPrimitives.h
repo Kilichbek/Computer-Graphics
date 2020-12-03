@@ -6,6 +6,7 @@
 
 class Ray; 
 class HitRecord;
+struct Triangle;
 
 // Abstract Class for any simple geometric objects
 
@@ -14,6 +15,7 @@ class Primitive {
     virtual HitRecord hit(const Ray& ray) const = 0;
     virtual ofFloatColor getColor() const { return color; }
     virtual float getSpecularCoeff() const { return specular_coeff;}
+    virtual bool isReflectEnabled() const { return reflect; }
     virtual void rotate(const glm::mat4& m)=0;
     virtual void translate(const glm::mat4& m)=0;
     virtual void scale(const glm::mat4& m)=0;
@@ -22,6 +24,7 @@ class Primitive {
  protected:
     ofFloatColor color;
     float specular_coeff;
+    bool reflect;
 };
 
 // Plane Class
@@ -44,6 +47,7 @@ class Plane: public Primitive {
 
 class Sphere: public Primitive {
  public:
+    Sphere() {};
     Sphere(float r, const glm::vec3& c,float spec_coef, const ofFloatColor& color);
     virtual HitRecord hit(const Ray& ray) const override;
     virtual void rotate(const glm::mat4& m) override {return;};
@@ -87,4 +91,47 @@ class Cylinder: public Primitive {
  private:
     float height, radius, radius_default;
     glm::vec3 center_top, center_bottom, axis,cb_default,ct_default;
+};
+
+// Bounding Box class
+
+class BBox: public Primitive {
+ public:
+    
+    BBox() {};
+    BBox(const glm::vec3& v1, const glm::vec3& v2);
+
+    virtual HitRecord hit(const Ray& ray) const override;
+    
+    virtual void rotate(const glm::mat4& m) override {return;};
+    virtual void translate(const glm::mat4& m) override {return;};
+    virtual void scale(const glm::mat4& m) override {return;};
+    virtual void reset() override {return;};
+        
+ private:
+    glm::vec3 min, max;
+};
+
+// Mesh Model class
+
+class Model: public Primitive {
+ public:
+    
+    Model(const glm::vec3& p, const ofFloatColor& col);
+    virtual HitRecord hit(const Ray& ray) const override;
+    
+    virtual void rotate(const glm::mat4& m) override {return;};
+    virtual void translate(const glm::mat4& m) override {return;};
+    virtual void scale(const glm::mat4& m) override {return;};
+    virtual void reset() override {return;};
+
+    std::vector<Triangle> triangles;
+    std::vector<glm::vec3> vertices, normals, pnormals;
+
+    Sphere bounding_sphere;
+    BBox bbox;
+    bool use_precomputed;
+    
+ private:
+    glm::vec3 position;
 };
